@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+      * {
+        text-align: center;
+        font-family: trebuchet ms;
+        margin: 5px;
+      }
+      
+      h1 {
+        font-size: 40px;
+        font-weight: 600;
+        color: black;
+      }
+      a {
+                font-size: 25px;;
+        font-weight: 950;
+        color: #444;
+      }
+        #preview {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+        .button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #conversionSection {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f5f5f5;
+        }
+        #conversionSection button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+      
+      header {
+        background-color: #4CAF50;
+        padding: 10px;
+      }
+    </style>
+</head>
+<body>
+  <header><a href="https://youtube.com/@immayr">Immayr's</a><h1>HTML5 Screen Recorder</h1></header>
+    <video id="preview" autoplay></video><br>
+    <button id="startButton" class="button">Start Recording</button>
+    <button id="stopButton" class="button" disabled>Stop Recording</button>
+    <button id="saveButton" class="button" disabled>Save as WEBM</button>
+
+    <div id="conversionSection">
+        <p>If you would like to convert any of your screen recordings to the MP4 format, use the button below to open Convertio.</p>
+        <button id="conversionButton" class="button" onclick="redirectToConversionPage()">Convert to MP4</button>
+    </div>
+
+    <script>
+        let preview = document.getElementById('preview');
+        let startButton = document.getElementById('startButton');
+        let stopButton = document.getElementById('stopButton');
+        let saveButton = document.getElementById('saveButton');
+        let stream, mediaRecorder, chunks = [];
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+        saveButton.addEventListener('click', saveRecording);
+
+        function startRecording() {
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            saveButton.disabled = true;
+
+            navigator.mediaDevices.getDisplayMedia({ video: true })
+                .then(function (s) {
+                    stream = s;
+                    preview.srcObject = stream;
+
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = function (e) {
+                        chunks.push(e.data);
+                    };
+                    mediaRecorder.start();
+                })
+                .catch(function (err) {
+                    console.error('Error: ' + err);
+                });
+        }
+
+        function stopRecording() {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            saveButton.disabled = false;
+
+            mediaRecorder.stop();
+            stream.getTracks().forEach(track => track.stop());
+            preview.srcObject = null;
+        }
+
+        function saveRecording() {
+            let blob = new Blob(chunks, { type: 'video/mp4' });
+            chunks = [];
+
+            let videoURL = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = videoURL;
+            a.download = 'screen_recording.mp4';
+            a.click();
+        }
+
+        function redirectToConversionPage() {
+            window.open('https://convertio.co/webm-mp4/', '_blank');
+        }
+    </script>
+</body>
+</html>
